@@ -1,0 +1,4 @@
+selenium==4.17.2
+webdriver-manager==4.0.1
+openai==1.12.0
+pyyaml==6.0.1
