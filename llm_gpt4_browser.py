@@ -1,6 +1,5 @@
 import logging
 import json
-import re
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -8,9 +7,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-import openai
 from openai import OpenAI
-import os
 import yaml
 import requests
 
@@ -61,24 +58,25 @@ class BrowseWeb:
                 return "No relevant passages found."
         
             # Format the prompt as a single user message
-            print("\nGenerating summar(y/ies)...")
+            print("\nGenerating output(s)...")
             #If returned passages are too long for the context window, split them up and summarize them separately.
             parts = self.split_text(passage)
             for part in parts:
                 print("...")
                 prompt = f"Relevant text:\n{part}\nSearch term: {search_term}\n"
-                prompt += "Please summarize the returned text in context of the search term."
+                prompt += "Please provide output in context of the search term."
+                prompt += "The output may be in the form of a summary, or more detailed data. Let the context of the search term dictate how detailed your output should be."
                 response_text = self.make_openai_request(prompt, "plain_text", "gpt-4")
                 summaries.append(label+response_text)
 
         print("\nGenerating final output...\n")
         summaries_string = "\n".join(summaries)
-        prompt = f"Website summaries:\n"
+        prompt = f"Website outputs in context of the search term:\n"
         prompt += summaries_string+"\n\n"
         prompt += "-------------------------"
         prompt += "\nSearch term: "+search_term
-        prompt += "\nThe passages above each summarize the associated web pages in context of the search term."
-        prompt += "\nPlease summarize the three website summaries into a single response in the context of the search term."
+        prompt += "\nThe passages above are outputs from the associated web pages in context of the search term."
+        prompt += "\nPlease combine the outputs into a single response that satisfies the context of the search term."
         #print("PROMPT"+prompt)
 
         response_text = self.make_openai_request(prompt, "plain_text", "gpt-4")
@@ -230,7 +228,7 @@ class BrowseWeb:
 
 
 if __name__ == "__main__":
-    request = "best llm to handle long python scripts reddit"
+    request = "format for data object calling service python homeassistant"
 
     browser = BrowseWeb()
     output = browser.main(request)
