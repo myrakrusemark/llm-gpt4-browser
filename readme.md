@@ -41,12 +41,62 @@ Additionally, you need:
    ```
    Replace the placeholders with your actual API keys.
 
+
 ## Usage
 To use the BrowseWeb script, navigate to the script's directory and run:
 ```sh
 python browse_web.py
 ```
 You can modify the `request` variable inside the `if __name__ == "__main__":` block to search for different terms.
+
+
+## Server Functionality for BrowseWeb
+
+### Introduction
+The BrowseWeb script now includes server functionality, allowing users to send search requests via HTTP and receive summarized information directly. This feature utilizes Flask, a lightweight WSGI web application framework, to handle HTTP requests.
+
+### Setup
+To enable the server functionality, ensure you have Flask installed alongside the other dependencies:
+```sh
+pip install Flask
+```
+
+### Running the Server
+1. **Start the server** by running the server script:
+   ```sh
+   python server.py
+   ```
+   This script initializes a Flask server that listens for POST requests with search terms.
+
+2. **Send a request** to the server using `curl` or any HTTP client:
+   ```sh
+   curl -X POST http://localhost:5000/search -H "Content-Type: application/json" -d "{\"search_term\":\"your search term here\"}"
+   ```
+   Replace `your search term here` with the term you wish to search for.
+
+### Server Endpoints
+- `/search` (POST): Accepts JSON payload with a `search_term` key. Returns a summarized response based on the search term provided.
+
+### Example Request
+```json
+{
+  "search_term": "example search term"
+}
+```
+
+### Response
+The server returns a JSON response containing the summarized information fetched and processed by the BrowseWeb script. The structure of the response may vary depending on the search results and summarization.
+
+### Customization
+You can customize the Flask server by modifying `server.py`. This includes changing the port, adding new endpoints, or altering request handling logic.
+
+### Limitations
+- The server relies on the proper configuration of the BrowseWeb script and its dependencies.
+- Ensure your server environment is secure, especially if exposing the server to public networks.
+
+### Disclaimer
+The server functionality is intended for educational and research purposes. Ensure compliance with all applicable laws and regulations, including data protection and privacy laws.
+
 
 ## Limitations
 - The script is heavily reliant on external services (OpenAI, Google CSE), and any changes to their APIs or rate limits may affect functionality.

@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from llm_gpt4_browser import BrowseWeb  # Make sure to replace 'your_script_name' with the actual name of your Python file containing the BrowseWeb class
+from llm_gpt4_browser import BrowseWeb
 
 app = Flask(__name__)
 
