@@ -33,55 +33,53 @@ class BrowseWeb:
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         self.openai_client = OpenAI(api_key=self.secrets['openai_api_key'])
 
-    def main(self, search_term=""):
-        search_results = self.google_search(search_term)
+    def main(self, search_results, query="None"):
+        if len(search_results) and query != "None":
 
-        summaries = []
-        for i, passage in enumerate(search_results):
-            url = search_results[i]['url']
-            label = f"\n-------------------------\n({i+1} of {len(search_results)}) - Browsing {search_results[i]['title']}({url}) - {search_results[i]['snippet']}\n"
-            #print(label)
+            passage_summaries = []
+            for i, passage in enumerate(search_results):
+                url = search_results[i]['url']
+                label = f"\n-------------------------\n({i+1} of {len(search_results)}) - Browsing {search_results[i]['title']}({url}) - {search_results[i]['snippet']}\n"
+                passages, _ = self.get_webpage_content(url)
 
-            passages, _ = self.get_webpage_content(url)
-            relevant_passages = []
+                relevant_passages = []
+                for j, passage in enumerate(passages, start=1):
+                    relevant_content = self.find_relevant_content(passage, query)
+                    if relevant_content:
+                        print(f"Analyzing passage {j} of {len(passages)}. {len(relevant_content)} relevant passages found.")
+                        relevant_passages.append(relevant_content)  # Append all relevant sections
+                    else:
+                        print(f"Analyzing passage {j} of {len(passages)}. No relevant passages found.")
 
-            for j, passage in enumerate(passages, start=1):
-                relevant_content = self.find_relevant_content(passage, search_term)
-                if relevant_content:
-                    print(f"Analyzing passage {j} of {len(passages)}. {len(relevant_content)} relevant passages found.")
-                    relevant_passages.append(relevant_content)  # Append all relevant sections
-                else:
-                    print(f"Analyzing passage {j} of {len(passages)}. No relevant passages found.")
+                if not relevant_passages:
+                    return "Server error: No relevant passages found. Try a different query maybe?"
+            
+                # Format the prompt as a single user message
+                print("\nGenerating output(s)...")
+                #If returned passages are too long for the context window, split them up and summarize them separately.
+                parts = self.split_text(passage)
+                for part in parts:
+                    print("...")
+                    prompt = f"Relevant text:\n{part}\nSearch term: {query}\n"
+                    prompt += "Please provide output in context of the search term."
+                    prompt += "The output may be in the form of a summary, or more detailed data. Let the context of the search term dictate how detailed your output should be."
+                    response_text = self.make_openai_request(prompt, "plain_text", "gpt-4")
+                    passage_summaries.append(label+response_text)
 
+            print("\nGenerating final output...\n")
+            passage_summaries_string = "\n".join(passage_summaries)
+            prompt = f"Website outputs in context of the search term:\n"
+            prompt += passage_summaries_string+"\n\n"
+            prompt += "-------------------------"
+            prompt += "\nSearch term: "+query
+            prompt += "\nThe passages above are outputs from the associated web pages in context of the search term."
+            prompt += "\nPlease combine the outputs into a single response that satisfies the context of the search term."
 
-            if not relevant_passages:
-                return "No relevant passages found."
-        
-            # Format the prompt as a single user message
-            print("\nGenerating output(s)...")
-            #If returned passages are too long for the context window, split them up and summarize them separately.
-            parts = self.split_text(passage)
-            for part in parts:
-                print("...")
-                prompt = f"Relevant text:\n{part}\nSearch term: {search_term}\n"
-                prompt += "Please provide output in context of the search term."
-                prompt += "The output may be in the form of a summary, or more detailed data. Let the context of the search term dictate how detailed your output should be."
-                response_text = self.make_openai_request(prompt, "plain_text", "gpt-4")
-                summaries.append(label+response_text)
-
-        print("\nGenerating final output...\n")
-        summaries_string = "\n".join(summaries)
-        prompt = f"Website outputs in context of the search term:\n"
-        prompt += summaries_string+"\n\n"
-        prompt += "-------------------------"
-        prompt += "\nSearch term: "+search_term
-        prompt += "\nThe passages above are outputs from the associated web pages in context of the search term."
-        prompt += "\nPlease combine the outputs into a single response that satisfies the context of the search term."
-        #print("PROMPT"+prompt)
-
-        response_text = self.make_openai_request(prompt, "plain_text", "gpt-4")
-        print(response_text)
-        return response_text
+            response_text = self.make_openai_request(prompt, "plain_text", "gpt-4")
+            print(response_text)
+            return response_text
+        else:
+            return "Server error: Missing Information. Search Results: "+len(search_results)+" Query: "+query
     
     def load_secrets(self, file_path):
         with open(file_path, 'r') as file:
@@ -149,10 +147,10 @@ class BrowseWeb:
         passages = [' '.join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
         return passages
 
-    def find_relevant_content(self, passage, search_term):
+    def find_relevant_content(self, passage, query):
         # Format the prompt as a single user message
         prompt = f"Passage: \"{passage}\"\n"
-        prompt += f"Search term: \"{search_term}\"\n"
+        prompt += f"Search term: \"{query}\"\n"
         prompt += "Identify the relevant sections. Return start and end excerpts that match the start and end of the relevant sections, about 30 characters long.\n"
         prompt += "Keep the start and end excerpts concise and short! Only about 30 characters long! They are only used for matching purposes.\n"
         prompt += "JSON format:\n"
@@ -228,7 +226,8 @@ class BrowseWeb:
 
 
 if __name__ == "__main__":
-    request = "format for data object calling service python homeassistant"
+    query = "aldi deals"
 
     browser = BrowseWeb()
-    output = browser.main(request)
+    search_results = browser.google_search(query)
+    output = browser.main(search_results, query)
