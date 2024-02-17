@@ -1,0 +1,19 @@
+alias: Browse Web - Analyze Web Pages
+description: ""
+trigger:
+  - platform: numeric_state
+    entity_id:
+      - todo.search_results
+    above: 0
+condition: []
+action:
+  - service: pyscript.browse_web
+    data: {}
+  - service: pyscript.clear_todo_list
+    data:
+      entity_id: todo.search_results
+  - service: notify.notify
+    metadata: {}
+    data:
+      message: Your browsing results are done!
+mode: single

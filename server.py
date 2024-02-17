@@ -7,7 +7,7 @@ app = Flask(__name__)
 curl -X POST http://127.0.0.1:5000/search -H 'Content-Type: application/json' -d '{"search_results":[{"title":"OpenAI","url":"https://openai.com","snippet":"OpenAI is an AI research and deployment company.", "query": "copyright"},{"title":"Wikipedia","url":"https://wikipedia.org","snippet":"Wikipedia is a free online encyclopedia, created and edited by volunteers around the world.", "query": "copyright"},{"title":"GitHub","url":"https://github.com","snippet":"GitHub is a development platform inspired by the way you work.", "query": "copyright"}]}'
 """
 
-@app.route('/search', methods=['POST'])
+@app.route('/browse_web', methods=['POST'])
 def search():
     data = request.json
     print(data)

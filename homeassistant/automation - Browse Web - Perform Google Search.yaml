@@ -1,0 +1,13 @@
+alias: Browse Web - Perform Google Search
+description: ""
+trigger:
+  - platform: state
+    entity_id:
+      - input_text.search_query
+condition: []
+action:
+  - service: pyscript.google_search
+    data:
+      query: "{{ states('input_text.search_query') }}"
+mode: single
+ 

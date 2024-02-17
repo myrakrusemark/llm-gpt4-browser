@@ -1,0 +1,31 @@
+- spec:
+    name: browse_web
+    description: Perform a Google search and then analyze the web pages. If you know the best answer, dont use this tool and just answer. Its imperative to let the user know you used the Browse Web tool and will get a notification when the Browser Results are ready.
+    parameters:
+      type: object
+      properties:
+        query:
+          type: string
+          description: The search query
+      required:
+      - query
+  function:
+    type: script
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: "{{query}}"
+      target:
+        entity_id: input_text.search_query
+- spec:
+    name: read_browsing_results
+    description: Read out or summarize browsing results.
+  function:
+    type: script
+    sequence:
+    - service: todo.get_items
+      data:
+        status: needs_action
+      target:
+        entity_id: todo.browsing_results
+      response_variable: _function_result
