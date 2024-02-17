@@ -2,10 +2,10 @@ import json
 import requests
 from datetime import datetime
 
-server = "http://basement-server:5000/browse-web"
+server = "http://basement-server:5000/browseweb"
 
 @service(supports_response = "optional")
-def browse_web(search_results_entity="todo.search_results", browsing_results_entity="todo.browsing_results"):
+def browse_web_request(search_results_entity="todo.search_results", browsing_results_entity="todo.browsing_results"):
     
     # Get the to-do item service response
     search_results_todo_list = todo.get_items(
