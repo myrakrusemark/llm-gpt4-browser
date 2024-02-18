@@ -1,25 +1,34 @@
 - spec:
     name: browse_web
-    description: Perform a Google search and then analyze the web pages. If you know the best answer, dont use this tool and just answer. Its imperative to let the user know you used the Browse Web tool and will get a notification when the Browser Results are ready.
+    description: Browse the Web based on a query. If you know the best answer, dont use this tool and just answer. Respond with --[short comment] Im browsing that for you. Ill notify you when your Browser results are ready--.
     parameters:
       type: object
       properties:
-        query:
+        search_query:
           type: string
           description: The search query
+        user_input:
+          type: string
+          description: What the user just said      
       required:
-      - query
+      - search_query
+      - user_input
   function:
     type: script
     sequence:
     - service: input_text.set_value
       data:
-        value: "{{query}}"
+        value: "{{search_query}}"
       target:
         entity_id: input_text.search_query
+    - service: input_text.set_value
+      data:
+        value: "{{user_input}}"
+      target:
+        entity_id: input_text.user_input
 - spec:
     name: read_browsing_results
-    description: Read out or summarize browsing results.
+    description: Red out or summarize browsing results.
   function:
     type: script
     sequence:

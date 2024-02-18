@@ -13,7 +13,9 @@ def search():
     data = request.json
     print(data)
     search_results = data.get('search_results')
-    query = search_results[0]['query']
+    search_query = search_results[0]['search_query']
+    user_input = search_results[0]['user_input']
+
 
     print(search_results)
     if not search_results:
@@ -21,7 +23,7 @@ def search():
 
     try:
         browser = BrowseWeb()
-        output = browser.main(search_results, query)
+        output = browser.main(search_results, search_query, user_input)
         return jsonify({'result': output})
     except Exception as e:
         print(e)
