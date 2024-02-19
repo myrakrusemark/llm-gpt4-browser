@@ -33,8 +33,8 @@ class BrowseWeb:
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         self.openai_client = OpenAI(api_key=self.secrets['openai_api_key'])
 
-    def main(self, search_results, query="None"):
-        if len(search_results) and query != "None":
+    def main(self, search_results, search_query="None", user_input="Not provided"):
+        if len(search_results) and search_query != "None":
 
             passage_summaries = []
             for i, passage in enumerate(search_results):
@@ -44,7 +44,7 @@ class BrowseWeb:
 
                 relevant_passages = []
                 for j, passage in enumerate(passages, start=1):
-                    relevant_content = self.find_relevant_content(passage, query)
+                    relevant_content = self.find_relevant_content(passage, search_query, user_input)
                     if relevant_content:
                         print(f"Analyzing passage {j} of {len(passages)}. {len(relevant_content)} relevant passages found.")
                         relevant_passages.append(relevant_content)  # Append all relevant sections
@@ -52,7 +52,7 @@ class BrowseWeb:
                         print(f"Analyzing passage {j} of {len(passages)}. No relevant passages found.")
 
                 if not relevant_passages:
-                    return "Server error: No relevant passages found. Try a different query maybe?"
+                    return "Server error: No relevant passages found. Try a different search_query maybe?"
             
                 # Format the prompt as a single user message
                 print("\nGenerating output(s)...")
@@ -60,41 +60,43 @@ class BrowseWeb:
                 parts = self.split_text(passage)
                 for part in parts:
                     print("...")
-                    prompt = f"Relevant text:\n{part}\nSearch term: {query}\n"
-                    prompt += "Please provide output in context of the search term."
+                    prompt = f"Relevant text:\n{part}"
+                    prompt += f"\nSearch query: {search_query}"
+                    prompt += "\nPlease provide output in context of the Search query."
                     prompt += "The output may be in the form of a summary, or more detailed data. Let the context of the search term dictate how detailed your output should be."
                     response_text = self.make_openai_request(prompt, "plain_text", "gpt-4")
                     passage_summaries.append(label+response_text)
 
             print("\nGenerating final output...\n")
             passage_summaries_string = "\n".join(passage_summaries)
-            prompt = f"Website outputs in context of the search term:\n"
+            prompt = f"Website outputs:\n"
             prompt += passage_summaries_string+"\n\n"
             prompt += "-------------------------"
-            prompt += "\nSearch term: "+query
-            prompt += "\nThe passages above are outputs from the associated web pages in context of the search term."
-            prompt += "\nPlease combine the outputs into a single response that satisfies the context of the search term."
+            prompt += f"\nUser input: {user_input}"
+            prompt += f"\nSearch query: {search_query}"
+            prompt += "\nThe passages above are outputs from the associated web pages in context of the Search term."
+            prompt += "\nPlease combine the outputs into a single response that satisfies the context of the User input."
 
             response_text = self.make_openai_request(prompt, "plain_text", "gpt-4")
             print(response_text)
             return response_text
         else:
-            return "Server error: Missing Information. Search Results: "+len(search_results)+" Query: "+query
+            return "Server error: Missing Information. Search Results: "+len(search_results)+" Search query: "+search_query+" User input: "+user_input
     
     def load_secrets(self, file_path):
         with open(file_path, 'r') as file:
             return yaml.safe_load(file)
     
-    def google_search(self, query):
+    def google_search(self, search_query):
         # Your API key and custom search engine ID
         google_cse_key = self.secrets['google_cse_key']
         google_cse_id = self.secrets['google_cse_id']
         
         # Construct the URL for the Google Custom Search JSON API
-        search_url = f"https://customsearch.googleapis.com/customsearch/v1?key={google_cse_key}&cx={google_cse_id}&q={query}&num=3"
+        search_url = f"https://customsearch.googleapis.com/customsearch/v1?key={google_cse_key}&cx={google_cse_id}&q={search_query}&num=3"
         
         # Make the request
-        print(f"Searching Google ({query})...")
+        print(f"Searching Google ({search_query})...")
         response = requests.get(search_url)
         
         # Check if the request was successful
@@ -147,11 +149,12 @@ class BrowseWeb:
         passages = [' '.join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
         return passages
 
-    def find_relevant_content(self, passage, query):
+    def find_relevant_content(self, passage, search_query, user_input):
         # Format the prompt as a single user message
         prompt = f"Passage: \"{passage}\"\n"
-        prompt += f"Search term: \"{query}\"\n"
-        prompt += "Identify the relevant sections. Return start and end excerpts that match the start and end of the relevant sections, about 30 characters long.\n"
+        prompt += f"Search query: \"{search_query}\"\n"
+        prompt += f"User input: \"{user_input}\"\n"
+        prompt += "Identify the relevant sections based on the Search query and User input. Return start and end excerpts that match the start and end of the relevant sections, about 30 characters long.\n"
         prompt += "Keep the start and end excerpts concise and short! Only about 30 characters long! They are only used for matching purposes.\n"
         prompt += "JSON format:\n"
         prompt += "{sections:[{'start': 'copy of start text', 'end': 'copy of end text'}]}"
@@ -226,8 +229,9 @@ class BrowseWeb:
 
 
 if __name__ == "__main__":
-    query = "aldi deals"
+    search_query = "aldi deals"
+    user_input = "give me a bulleted list of aldi deals"
 
     browser = BrowseWeb()
-    search_results = browser.google_search(query)
-    output = browser.main(search_results, query)
+    search_results = browser.google_search(search_query, user_input)
+    output = browser.main(search_results, search_query)
