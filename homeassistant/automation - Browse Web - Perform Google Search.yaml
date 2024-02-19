@@ -6,8 +6,13 @@ trigger:
       - input_text.search_query
 condition: []
 action:
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
   - service: pyscript.google_search
     data:
-      query: "{{ states('input_text.search_query') }}"
+      search_query: "{{ states('input_text.search_query') }}"
+      user_input: "{{ states('input_text.user_input') }}"
 mode: single
- 

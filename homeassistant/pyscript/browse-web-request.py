@@ -25,27 +25,36 @@ def browse_web_request(search_results_entity="todo.search_results", browsing_res
     #Create Browsing output todo item
     timestamp = datetime.now()
     clean_timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-    query = search_results["search_results"][0]["query"]
+    search_query = search_results["search_results"][0]["search_query"]
+    user_input = search_results["search_results"][0]["user_input"]
     todo.add_item(
         entity_id=browsing_results_entity, 
-        item=query,
+        item=user_input,
         description="Processing. Please wait..."
         )
 
     headers = {'Content-Type': 'application/json'}
 
-    response = task.executor(requests.post,
-        server, json=search_results, headers=headers,
-        timeout=600
-        )
-        
+    try:
+        response = task.executor(requests.post,
+            server, json=search_results, headers=headers,
+            timeout=600
+            )
+    except Exception as e:
+        service.call(
+            "todo", "update_item", 
+            entity_id=browsing_results_entity, 
+            item=user_input,
+            description=str(e)
+            )
+            
     #Update Browsing Results todo item
     if response.status_code == 200:
         content = response.json().get('result', [])
         service.call(
             "todo", "update_item", 
             entity_id=browsing_results_entity, 
-            item=query,
+            item=user_input,
             description=str(content)
             )
         return {"response": content}
@@ -54,7 +63,7 @@ def browse_web_request(search_results_entity="todo.search_results", browsing_res
         service.call(
             "todo", "update_item", 
             entity_id=browsing_results_entity, 
-            item=query,
+            item=user_input,
             description="Failed to get output. Check core logs for any information and check your server."
             )
         log.error("Failed to fetch search results")

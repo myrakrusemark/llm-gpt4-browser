@@ -15,5 +15,5 @@ action:
   - service: notify.notify
     metadata: {}
     data:
-      message: Your browsing results are done!
+      message: Your browsing results are ready!
 mode: single
