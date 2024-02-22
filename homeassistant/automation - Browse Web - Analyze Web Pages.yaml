@@ -1,19 +1,41 @@
 alias: Browse Web - Analyze Web Pages
 description: ""
 trigger:
-  - platform: numeric_state
+  - platform: state
     entity_id:
       - todo.search_results
-    above: 0
 condition: []
 action:
   - service: pyscript.browse_web_request
-    data: {}
+    data:
+      title: >-
+        {{ states('input_text.browser_title') }} - {{
+        states('input_text.browser_time') }}
+      search_query: "{{ states('input_text.browser_search_query') }}"
+      user_input: "{{ states('input_text.browser_user_input') }}"
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+    enabled: false
   - service: pyscript.clear_todo_list
     data:
       entity_id: todo.search_results
-  - service: notify.notify
-    metadata: {}
+    enabled: false
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - service: input_text.set_value
     data:
-      message: Your browsing results are ready!
+      value: Empty
+    enabled: true
+    target:
+      entity_id:
+        - input_text.browser_search_query
+        - input_text.browser_user_input
+        - input_text.browser_time
+        - input_text.browser_title
 mode: single

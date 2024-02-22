@@ -9,10 +9,18 @@
           description: The search query
         user_input:
           type: string
-          description: What the user just said      
+          description: A clear idea of what the user wants. Be concise! (desire, format, etc.)
+        title:
+          type: string
+          description: A short title for the browser session (Just alphanumberic/spaces. No punctuation!).
+        time:
+          type: string
+          description: 'The current time. Example: Jan 5, 2024 at 15:53:27'
       required:
       - search_query
       - user_input
+      - title
+      - time
   function:
     type: script
     sequence:
@@ -20,12 +28,22 @@
       data:
         value: "{{search_query}}"
       target:
-        entity_id: input_text.search_query
+        entity_id: input_text.browser_search_query
     - service: input_text.set_value
       data:
         value: "{{user_input}}"
       target:
-        entity_id: input_text.user_input
+        entity_id: input_text.browser_user_input
+    - service: input_text.set_value
+      data:
+        value: "{{title}}"
+      target:
+        entity_id: input_text.browser_title
+    - service: input_text.set_value
+      data:
+        value: "{{time}}"
+      target:
+        entity_id: input_text.browser_time
 - spec:
     name: read_browsing_results
     description: Red out or summarize browsing results.

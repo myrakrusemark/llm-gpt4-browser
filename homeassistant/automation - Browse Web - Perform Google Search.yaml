@@ -3,8 +3,10 @@ description: ""
 trigger:
   - platform: state
     entity_id:
-      - input_text.search_query
-condition: []
+      - input_text.browser_time
+condition:
+  - condition: template
+    value_template: "{{ trigger.to_state.state != 'Empty' }}"
 action:
   - delay:
       hours: 0
@@ -13,6 +15,9 @@ action:
       milliseconds: 0
   - service: pyscript.google_search
     data:
-      search_query: "{{ states('input_text.search_query') }}"
-      user_input: "{{ states('input_text.user_input') }}"
+      search_query: "{{ states('input_text.browser_search_query') }}"
+      user_input: "{{ states('input_text.browser_user_input') }}"
+      title: >-
+        {{ states('input_text.browser_title') }} - {{
+        states('input_text.browser_time') }}
 mode: single
